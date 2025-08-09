@@ -1,0 +1,399 @@
+// This is your Prisma schema file for Settler Iran
+// پایگاه داده اپلیکیشن Settler ایران
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [uuidOssp(map: "uuid-ossp"), unaccent, pg_trgm]
+}
+
+// =============================================================================
+// ENUMS (انواع داده)
+// =============================================================================
+
+enum CurrencyType {
+  IRR
+  TOMAN
+
+  @@map("currency_type")
+}
+
+enum UserStatus {
+  active
+  suspended
+  pending_verification
+  deleted
+
+  @@map("user_status")
+}
+
+enum DebtStatus {
+  pending
+  acknowledged
+  disputed
+  settled
+  cancelled
+  overdue
+
+  @@map("debt_status")
+}
+
+enum GroupType {
+  household
+  friends
+  work
+  trip
+  business
+  family
+
+  @@map("group_type")
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+  cancelled
+  refunded
+
+  @@map("transaction_status")
+}
+
+enum PaymentMethod {
+  cash
+  bank_transfer
+  card
+  shaparak
+  saman
+  parsian
+  mellat
+  saderat
+  other
+
+  @@map("payment_method")
+}
+
+enum NotificationType {
+  debt_created
+  debt_reminder
+  payment_received
+  group_invite
+  system_update
+
+  @@map("notification_type")
+}
+
+enum PriorityLevel {
+  low
+  normal
+  high
+  urgent
+
+  @@map("priority_level")
+}
+
+// =============================================================================
+// MODELS (مدل‌ها)
+// =============================================================================
+
+model User {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  // Authentication (احراز هویت)
+  email        String  @unique @db.VarChar(255)
+  phone        String  @unique @db.VarChar(20)
+  passwordHash String  @map("password_hash") @db.VarChar(255)
+
+  // Personal Information (اطلاعات شخصی)
+  firstName  String    @map("first_name") @db.VarChar(100)
+  lastName   String    @map("last_name") @db.VarChar(100)
+  nationalId String?   @unique @map("national_id") @db.VarChar(10)
+  birthDate  DateTime? @map("birth_date") @db.Date
+  avatarUrl  String?   @map("avatar_url")
+
+  // Preferences (تنظیمات)
+  preferredCurrency CurrencyType @default(TOMAN) @map("preferred_currency")
+  language          String       @default("fa-IR") @db.VarChar(5)
+  timezone          String       @default("Asia/Tehran") @db.VarChar(50)
+
+  // Search optimization (بهینه‌سازی جستجو)
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  // Status and Security (وضعیت و امنیت)
+  status              UserStatus @default(pending_verification)
+  isEmailVerified     Boolean    @default(false) @map("is_email_verified")
+  isPhoneVerified     Boolean    @default(false) @map("is_phone_verified")
+  twoFactorEnabled    Boolean    @default(false) @map("two_factor_enabled")
+  twoFactorSecret     String?    @map("two_factor_secret") @db.VarChar(255)
+
+  // Timestamps (زمان‌بندی)
+  lastLoginAt       DateTime? @map("last_login_at") @db.Timestamptz(6)
+  emailVerifiedAt   DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  phoneVerifiedAt   DateTime? @map("phone_verified_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  ownedGroups       Group[]         @relation("GroupOwner")
+  groupMemberships  GroupMember[]
+  creditorDebts     Debt[]          @relation("DebtCreditor")
+  debtorDebts       Debt[]          @relation("DebtDebtor")
+  payerTransactions Transaction[]   @relation("TransactionPayer")
+  receiverTransactions Transaction[] @relation("TransactionReceiver")
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  groupInvites      GroupMember[]   @relation("GroupInviter")
+
+  @@map("users")
+}
+
+model Group {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  // Basic Information (اطلاعات پایه)
+  name        String    @db.VarChar(200)
+  description String?
+  type        GroupType
+  avatarUrl   String?   @map("avatar_url")
+  color       String    @default("#1976d2") @db.VarChar(7)
+
+  // Management (مدیریت)
+  ownerId     String @map("owner_id") @db.Uuid
+  memberLimit Int    @default(50) @map("member_limit")
+
+  // Settings (تنظیمات)
+  defaultCurrency  CurrencyType @default(TOMAN) @map("default_currency")
+  autoSettle       Boolean      @default(false) @map("auto_settle")
+  requireApproval  Boolean      @default(true) @map("require_approval")
+
+  // Search optimization (بهینه‌سازی جستجو)
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  // Status (وضعیت)
+  isActive Boolean @default(true) @map("is_active")
+
+  // Timestamps (زمان‌بندی)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  owner   User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members GroupMember[]
+  debts   Debt[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  groupId String @map("group_id") @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+
+  // Role and Permissions (نقش و مجوزها)
+  role        String                     @default("member") @db.VarChar(20)
+  permissions Unsupported("jsonb")?      @default("[]")
+
+  // Status (وضعیت)
+  status String @default("active") @db.VarChar(20)
+
+  // Invitation Information (اطلاعات دعوت)
+  inviteToken     String?   @map("invite_token") @db.VarChar(100)
+  inviteExpiresAt DateTime? @map("invite_expires_at") @db.Timestamptz(6)
+  invitedBy       String?   @map("invited_by") @db.Uuid
+
+  // Timestamps (زمان‌بندی)
+  joinedAt DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  leftAt   DateTime? @map("left_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inviter User? @relation("GroupInviter", fields: [invitedBy], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model Debt {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  // Parties (طرفین)
+  creditorId String @map("creditor_id") @db.Uuid
+  debtorId   String @map("debtor_id") @db.Uuid
+
+  // Amount Information (اطلاعات مبلغ)
+  amount   Decimal      @db.Decimal(15, 2)
+  currency CurrencyType @default(TOMAN)
+
+  // Description (توضیحات)
+  description String  @db.Text
+  category    String? @db.VarChar(50)
+
+  // Dates (تاریخ‌ها)
+  dueDate        DateTime? @map("due_date") @db.Date
+  persianDueDate String?   @map("persian_due_date")
+  reminderDate   DateTime? @map("reminder_date") @db.Date
+
+  // Status and Tracking (وضعیت و پیگیری)
+  status   DebtStatus    @default(pending)
+  priority PriorityLevel @default(normal)
+
+  // Evidence and Notes (مدارک و یادداشت‌ها)
+  proofUrl String? @map("proof_url")
+  notes    String?
+
+  // Group Association (ارتباط با گروه)
+  groupId      String? @map("group_id") @db.Uuid
+  parentDebtId String? @map("parent_debt_id") @db.Uuid
+
+  // Search Optimization (بهینه‌سازی جستجو)
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  // Timestamps (زمان‌بندی)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  creditor     User          @relation("DebtCreditor", fields: [creditorId], references: [id])
+  debtor       User          @relation("DebtDebtor", fields: [debtorId], references: [id])
+  group        Group?        @relation(fields: [groupId], references: [id])
+  parentDebt   Debt?         @relation("DebtSplit", fields: [parentDebtId], references: [id])
+  childDebts   Debt[]        @relation("DebtSplit")
+  transactions Transaction[]
+
+  @@map("debts")
+}
+
+model Transaction {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  // Reference (مرجع)
+  debtId     String @map("debt_id") @db.Uuid
+  payerId    String @map("payer_id") @db.Uuid
+  receiverId String @map("receiver_id") @db.Uuid
+
+  // Transaction Details (جزئیات تراکنش)
+  amount   Decimal      @db.Decimal(15, 2)
+  currency CurrencyType @default(TOMAN)
+
+  // Payment Information (اطلاعات پرداخت)
+  paymentMethod     PaymentMethod @map("payment_method")
+  gatewayReference  String?       @map("gateway_reference") @db.VarChar(255)
+  cardNumberMasked  String?       @map("card_number_masked") @db.VarChar(20)
+
+  // Status and Tracking (وضعیت و پیگیری)
+  status TransactionStatus @default(pending)
+
+  // Persian Timestamp (زمان شمسی)
+  persianTimestamp String? @map("persian_timestamp")
+
+  // Evidence (مدارک)
+  receiptUrl      String? @map("receipt_url")
+  paymentProofUrl String? @map("payment_proof_url")
+
+  // Settlement Confirmation (تایید تسویه)
+  confirmedByPayer    Boolean @default(false) @map("confirmed_by_payer")
+  confirmedByReceiver Boolean @default(false) @map("confirmed_by_receiver")
+  confirmationCode    String? @map("confirmation_code") @db.VarChar(6)
+
+  // Notes (یادداشت‌ها)
+  notes      String? @db.Text
+  adminNotes String? @map("admin_notes") @db.Text
+
+  // Timestamps (زمان‌بندی)
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+  confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  debt     Debt @relation(fields: [debtId], references: [id])
+  payer    User @relation("TransactionPayer", fields: [payerId], references: [id])
+  receiver User @relation("TransactionReceiver", fields: [receiverId], references: [id])
+
+  @@map("transactions")
+}
+
+model Notification {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  // Target User (کاربر هدف)
+  userId String @map("user_id") @db.Uuid
+
+  // Content (محتوا)
+  title    String           @db.VarChar(200)
+  message  String           @db.Text
+  type     NotificationType
+  priority PriorityLevel    @default(normal)
+
+  // Metadata (اطلاعات تکمیلی)
+  data               Unsupported("jsonb")?
+  relatedEntityType  String? @map("related_entity_type") @db.VarChar(50)
+  relatedEntityId    String? @map("related_entity_id") @db.Uuid
+
+  // Status (وضعیت)
+  isRead Boolean @default(false) @map("is_read")
+  isSent Boolean @default(false) @map("is_sent")
+
+  // Delivery Options (گزینه‌های ارسال)
+  sendPush  Boolean @default(true) @map("send_push")
+  sendSms   Boolean @default(false) @map("send_sms")
+  sendEmail Boolean @default(false) @map("send_email")
+
+  // Timing (زمان‌بندی)
+  scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz(6)
+  sentAt       DateTime? @map("sent_at") @db.Timestamptz(6)
+  readAt       DateTime? @map("read_at") @db.Timestamptz(6)
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz(6)
+
+  // Search Optimization (بهینه‌سازی جستجو)
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  // Actor Information (اطلاعات انجام‌دهنده)
+  userId    String?                   @map("user_id") @db.Uuid
+  ipAddress Unsupported("inet")?      @map("ip_address")
+  userAgent String?                   @map("user_agent")
+
+  // Action Details (جزئیات عمل)
+  action     String @db.VarChar(50)
+  entityType String @map("entity_type") @db.VarChar(50)
+  entityId   String @map("entity_id") @db.Uuid
+
+  // Changes (تغییرات)
+  oldValues Unsupported("jsonb")? @map("old_values")
+  newValues Unsupported("jsonb")? @map("new_values")
+
+  // Context (متن)
+  description String?                   @db.Text
+  metadata    Unsupported("jsonb")?
+
+  // Persian Timestamp (زمان شمسی)
+  persianTimestamp String? @map("persian_timestamp")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations (روابط)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+} 

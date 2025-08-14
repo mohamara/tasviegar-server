@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: settler-postgres
+    environment:
+      POSTGRES_DB: settler
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - settler-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: settler-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - settler-network
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: settler-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_NAME: settler
+      DB_SYNC: true
+      DB_LOGGING: true
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: settler-dev-secret-key
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app/backend
+      - /app/backend/node_modules
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - settler-network
+    command: npm run start:dev
+
+  # Admin Panel (Vue.js)
+  admin:
+    build:
+      context: ./tasviegar-admin
+      dockerfile: Dockerfile.dev
+    container_name: settler-admin
+    environment:
+      VITE_API_URL: http://localhost:3000/api/v1
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./tasviegar-admin:/app
+      - /app/node_modules
+    networks:
+      - settler-network
+    command: npm run dev
+
+  # Design Studio (React)
+  design-studio:
+    build:
+      context: ./mock-design-studio
+      dockerfile: Dockerfile.dev
+    container_name: settler-design-studio
+    environment:
+      VITE_API_URL: http://localhost:3000/api/v1
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./mock-design-studio:/app
+      - /app/node_modules
+    networks:
+      - settler-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  settler-network:
+    driver: bridge

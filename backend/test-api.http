@@ -1,0 +1,299 @@
+### Variables
+@baseUrl = http://localhost:3000/api/v1
+@authToken = your-jwt-token-here
+
+### Authentication
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "mobile": "09123456789",
+  "password": "password123"
+}
+
+### Get Auth Token
+@authToken = {{login.response.body.accessToken}}
+
+### ===== DEBTS API TESTS =====
+
+### Create New Debt
+POST {{baseUrl}}/debts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "خرید ناهار گروهی",
+  "description": "ناهار گروهی در رستوران",
+  "totalAmount": 500000,
+  "type": "group_expense",
+  "currency": "IRR",
+  "participants": [
+    {
+      "userId": "user-id-1",
+      "shareAmount": 200000,
+      "role": "debtor"
+    },
+    {
+      "userId": "user-id-2", 
+      "shareAmount": 150000,
+      "role": "debtor"
+    },
+    {
+      "userId": "user-id-3",
+      "shareAmount": 150000,
+      "role": "debtor"
+    }
+  ]
+}
+
+### Get User Debts
+GET {{baseUrl}}/debts?page=1&limit=10&status=active
+Authorization: Bearer {{authToken}}
+
+### Get Debt Statistics
+GET {{baseUrl}}/debts/statistics
+Authorization: Bearer {{authToken}}
+
+### Get Debt by ID
+GET {{baseUrl}}/debts/debt-id-here
+Authorization: Bearer {{authToken}}
+
+### Update Debt
+PUT {{baseUrl}}/debts/debt-id-here
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "خرید ناهار گروهی - ویرایش شده",
+  "description": "ناهار گروهی در رستوران با توضیحات جدید"
+}
+
+### Confirm Participation
+POST {{baseUrl}}/debts/debt-id-here/confirm
+Authorization: Bearer {{authToken}}
+
+### Create Transaction
+POST {{baseUrl}}/debts/transactions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "debtId": "debt-id-here",
+  "payeeId": "user-id-2",
+  "amount": 50000,
+  "description": "پرداخت بخشی از بدهی",
+  "paymentMethod": "cash"
+}
+
+### Complete Transaction
+PUT {{baseUrl}}/debts/transactions/transaction-id-here/complete
+Authorization: Bearer {{authToken}}
+
+### Get User Transactions
+GET {{baseUrl}}/debts/transactions?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Delete Debt
+DELETE {{baseUrl}}/debts/debt-id-here
+Authorization: Bearer {{authToken}}
+
+### ===== USER API TESTS =====
+
+### Get User Profile
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{authToken}}
+
+### Update User Profile
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "firstName": "علی",
+  "lastName": "احمدی",
+  "email": "ali@example.com",
+  "birthDate": "1990-01-01",
+  "gender": "male",
+  "address": "تهران، خیابان ولیعصر",
+  "postalCode": "1234567890",
+  "city": "تهران",
+  "province": "تهران"
+}
+
+### Get User Preferences
+GET {{baseUrl}}/users/preferences
+Authorization: Bearer {{authToken}}
+
+### Update User Preferences
+PUT {{baseUrl}}/users/preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "language": "fa",
+  "theme": "dark",
+  "notifications": {
+    "sms": true,
+    "email": true,
+    "push": false
+  },
+  "privacy": {
+    "profileVisibility": "friends",
+    "showBalance": false
+  }
+}
+
+### ===== AUTH API TESTS =====
+
+### Register New User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "mobile": "09123456789",
+  "password": "password123"
+}
+
+### Verify SMS Code
+POST {{baseUrl}}/auth/verify-sms
+Content-Type: application/json
+
+{
+  "mobile": "09123456789",
+  "code": "123456"
+}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{authToken}}
+
+### Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "mobile": "09123456789"
+}
+
+### ===== ERROR HANDLING TESTS =====
+
+### Test Invalid Debt Creation
+POST {{baseUrl}}/debts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "totalAmount": -1000,
+  "participants": []
+}
+
+### Test Unauthorized Access
+GET {{baseUrl}}/debts/debt-id-here
+# No Authorization header
+
+### Test Invalid Transaction
+POST {{baseUrl}}/debts/transactions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "debtId": "invalid-id",
+  "payeeId": "invalid-id",
+  "amount": -50000
+}
+
+### ===== PERFORMANCE TESTS =====
+
+### Test Pagination
+GET {{baseUrl}}/debts?page=1&limit=5
+Authorization: Bearer {{authToken}}
+
+### Test Search
+GET {{baseUrl}}/debts?search=ناهار
+Authorization: Bearer {{authToken}}
+
+### Test Filtering
+GET {{baseUrl}}/debts?status=active&type=group_expense
+Authorization: Bearer {{authToken}}
+
+### ===== BULK OPERATIONS =====
+
+### Create Multiple Debts (for testing)
+# This would be used in development/testing
+POST {{baseUrl}}/debts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "خرید سوپرمارکت",
+  "description": "خرید مواد غذایی",
+  "totalAmount": 300000,
+  "type": "group_expense",
+  "participants": [
+    {
+      "userId": "user-id-1",
+      "shareAmount": 100000
+    },
+    {
+      "userId": "user-id-2",
+      "shareAmount": 100000
+    },
+    {
+      "userId": "user-id-3",
+      "shareAmount": 100000
+    }
+  ]
+}
+
+### ===== NOTIFICATION TESTS =====
+
+# These endpoints would be implemented in the notifications module
+### Get User Notifications
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{authToken}}
+
+### Mark Notification as Read
+PUT {{baseUrl}}/notifications/notification-id-here/read
+Authorization: Bearer {{authToken}}
+
+### ===== GROUP TESTS =====
+
+# These endpoints would be implemented in the groups module
+### Create Group
+POST {{baseUrl}}/groups
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "گروه خانواده",
+  "description": "گروه خانوادگی ما",
+  "type": "family",
+  "privacy": "private"
+}
+
+### Get User Groups
+GET {{baseUrl}}/groups
+Authorization: Bearer {{authToken}}
+
+### ===== HEALTH CHECK =====
+
+### API Health Check
+GET {{baseUrl}}/health
+
+### Database Health Check
+GET {{baseUrl}}/health/database
+
+### ===== SWAGGER DOCUMENTATION =====
+
+### Access Swagger UI
+GET http://localhost:3000/api/docs

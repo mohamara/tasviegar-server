@@ -1,146 +1,256 @@
-# Settler App – Comprehensive Product Specification
+# 🟪 Settler - Social Fintech Platform
 
-## 🟪 Product Overview
+## 📋 Project Overview
 
-**Settler** is a Social Fintech platform designed to bring transparency, structure, and formalization to informal debts between individuals, groups, and organizations. It facilitates **recording, tracking, and officially settling debts** with legal-grade documents and intelligent features.
+Settler is a comprehensive social fintech platform designed for debt management and settlements in Iran. The platform enables users to track debts, manage group expenses, and facilitate secure settlements with legal documentation support.
+
+## 🏗️ Architecture
+
+### Microservices Design
+- **Backend API** (NestJS + TypeScript)
+- **Admin Panel** (Vue.js 3 + TypeScript)
+- **Design Studio** (React + TypeScript)
+- **Mobile App** (React Native - Future)
+
+### Technology Stack
+- **Backend**: NestJS, TypeScript, PostgreSQL, Redis, JWT
+- **Frontend**: Vue.js 3, React, TypeScript, TailwindCSS
+- **Infrastructure**: Docker, Docker Compose
+- **Database**: PostgreSQL with TypeORM
+- **Cache**: Redis for sessions and caching
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Docker & Docker Compose
+- PostgreSQL 14+ (if running locally)
+- Redis (optional)
+
+### Development Setup
+
+1. **Clone and Install:**
+```bash
+git clone <repository-url>
+cd tasviegar-server
+npm install
+```
+
+2. **Environment Setup:**
+```bash
+# Copy environment files
+cp backend/.env.example backend/.env
+# Edit backend/.env with your configuration
+```
+
+3. **Start with Docker (Recommended):**
+```bash
+# Start all services
+npm run docker:up
+
+# View logs
+npm run docker:logs
+
+# Stop services
+npm run docker:down
+```
+
+4. **Start Locally:**
+```bash
+# Start backend
+npm run start:dev
+
+# Start admin panel (in separate terminal)
+cd tasviegar-admin
+npm run dev
+
+# Start design studio (in separate terminal)
+cd mock-design-studio
+npm run dev
+```
+
+## 📚 API Documentation
+
+- **Swagger UI**: http://localhost:3000/api/docs
+- **API Base URL**: http://localhost:3000/api/v1
+
+### Key Endpoints
+- **Authentication**: `/api/v1/auth/*`
+- **Users**: `/api/v1/users/*`
+- **Profile**: `/api/v1/users/profile/me`
+
+## 🔐 Authentication Flow
+
+1. **Register**: `POST /api/v1/auth/register`
+2. **Login**: `POST /api/v1/auth/login`
+3. **Verify SMS**: `POST /api/v1/auth/verify-sms`
+4. **Refresh Token**: `POST /api/v1/auth/refresh`
+5. **Logout**: `POST /api/v1/auth/logout`
+
+## 🏛️ Project Structure
+
+```
+tasviegar-server/
+├── backend/                 # NestJS Backend API
+│   ├── src/
+│   │   ├── auth/           # Authentication module
+│   │   ├── config/         # Configuration files
+│   │   ├── app.module.ts   # Root module
+│   │   └── main.ts         # Entry point
+│   ├── README.md           # Backend documentation
+│   └── tsconfig.json       # TypeScript config
+├── tasviegar-admin/        # Vue.js Admin Panel
+├── mock-design-studio/     # React Design Studio
+├── database/              # Database migrations & schema
+├── definition/            # System architecture docs
+├── docker-compose.yml     # Development environment
+├── Dockerfile.dev         # Development Dockerfile
+└── package.json           # Root package.json
+```
+
+## 🛠️ Development
+
+### Available Scripts
+```bash
+# Backend
+npm run start:dev          # Development server
+npm run build              # Build for production
+npm run test               # Run tests
+npm run lint               # Lint code
+npm run format             # Format code
+
+# Docker
+npm run docker:up          # Start all services
+npm run docker:down        # Stop all services
+npm run docker:logs        # View logs
+npm run docker:build       # Build containers
+npm run docker:clean       # Clean up volumes
+
+# Database
+npm run migration:generate # Generate migration
+npm run migration:run      # Run migrations
+npm run migration:revert   # Revert migration
+```
+
+### Code Quality
+- **ESLint**: Code linting
+- **Prettier**: Code formatting
+- **Jest**: Unit testing
+- **TypeScript**: Type safety
+
+## 🇮🇷 Iranian Localization
+
+### Features
+- ✅ Persian date support (Jalali calendar)
+- ✅ Iranian mobile number validation
+- ✅ Iranian national ID validation
+- ✅ SMS integration with Iranian providers
+- ✅ Persian error messages and UI
+
+### Validation Rules
+- **Mobile**: `+98 9XX XXX XXXX` format
+- **National ID**: 10-digit validation with checksum
+- **Postal Code**: 10-digit format
+
+## 🔧 Configuration
+
+### Environment Variables
+```env
+# Application
+PORT=3000
+NODE_ENV=development
+
+# JWT
+JWT_SECRET=your-secret-key
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=password
+DB_NAME=settler
+
+# SMS Service
+SMS_PROVIDER=farapayamak
+SMS_API_KEY=your-api-key
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+## 🚀 Deployment
+
+### Production Checklist
+- [ ] Set `NODE_ENV=production`
+- [ ] Configure production database
+- [ ] Set up SSL certificates
+- [ ] Configure monitoring
+- [ ] Set up backup strategy
+- [ ] Configure CDN for static assets
+
+### Docker Production
+```bash
+# Build production image
+docker build -t settler-backend .
+
+# Run with environment variables
+docker run -p 3000:3000 --env-file .env settler-backend
+```
+
+## 📊 Features
+
+### Backend API
+- ✅ JWT Authentication with refresh tokens
+- ✅ SMS verification (Iranian providers)
+- ✅ Rate limiting and security
+- ✅ Input validation and error handling
+- ✅ Persian date support
+- ✅ Swagger documentation
+- ✅ TypeORM with PostgreSQL
+- ✅ Password hashing with bcrypt
+
+### User Management
+- ✅ Complete user profiles
+- ✅ Preferences and settings
+- ✅ Role-based access control
+- ✅ Soft deletes for audit trails
+- ✅ Search and pagination
+
+### Security
+- ✅ Helmet security headers
+- ✅ CORS configuration
+- ✅ Rate limiting
+- ✅ Input sanitization
+- ✅ Audit logging
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Follow the coding standards
+4. Add tests for new features
+5. Update documentation
+6. Submit a pull request
+
+### Code Standards
+- Use TypeScript strictly
+- Follow NestJS conventions
+- Add comprehensive tests
+- Use conventional commits
+- Update API documentation
+
+## 📄 License
+
+This project is licensed under the ISC License.
+
+## 📞 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Contact the development team
+- Check the documentation
 
 ---
 
-## 🎯 Core Mission
-
-To build a secure, user-friendly, and scalable infrastructure for:
-- Peer-to-peer (P2P) debt registration and settlement
-- Group-level shared expense management
-- Freelancer-client financial settlements
-- B2B multi-party debt resolution via smart clearing algorithms
-
----
-
-## ⚙️ Core Functional Modules
-
-### 1. **Personal & Group Debt Management**
-- Create debt with metadata: amount, due date, description, proof (image, PDF)
-- Track debt status: open, pending, settled
-- One-click settlement between users
-- Optional private chat for agreements
-
-### 2. **Group & Multi-Party Features**
-- Create financial groups (e.g. roommates, trip buddies, family funds)
-- Assign shares, view debt breakdown per member
-- Export reports and group summaries
-
-### 3. **Chain-Settlement Algorithm**
-- Automatically detect debt loops (A → B → C → A)
-- Suggest optimal settlement paths to avoid circular transactions
-- Reduce cash flow dependency for B2B cases
-
-### 4. **Legal Documentation System**
-- Export court-valid PDF receipts
-- Include digital signatures and audit logs
-- Pay-per-document model (e.g. $1–2 per certified receipt)
-
-### 5. **Access & Privacy Management**
-- End-to-end encryption of all debt records
-- Custom visibility settings (private, group, organization)
-- 2FA and backup logs for reliability
-
-### 6. **UI/UX Frontends**
-- Cross-platform Mobile App (iOS/Android)
-- Responsive Web App (for enterprise dashboards)
-- Minimalist design with onboarding steps
-
----
-
-## 💰 Revenue Model
-
-| Income Stream | Details |
-|---------------|---------|
-| Freemium Tier | Debt registration and reminders are free |
-| Transaction Fees | Only charged upon official settlement (e.g. 0.5% with cap) |
-| Document Fees | Fixed fee for court-valid receipts |
-| Premium Plans | For organizations, fund groups, B2B users |
-| API Access | Financial reporting and legal export features |
-
----
-
-## 🧠 Competitive Tech Advantages
-
-- **Smart Chain-Settlement Engine**: Prevents duplicate transactions and enables smart clearing
-- **GovTech Compatible**: Can plug into tax systems and judicial APIs
-- **Social Layer Built-In**: Designed to reduce emotional tension in debt collection
-- **Legal Readiness**: Court-level receipts and audit trails
-
----
-
-## 🧩 MVP Development Scope (Phase 1)
-
-| Feature | Priority |
-|--------|----------|
-| P2P Debt Creation & Settlement | ✅ High |
-| Simple Group Creation | ✅ High |
-| Legal Receipt Generation | ✅ Medium |
-| Chain-Settlement Engine | ⏳ Next phase |
-| Notifications & Reminders | ✅ High |
-| Secure Auth (2FA, Recovery) | ✅ High |
-
----
-
-## 🧠 AI/ML Integration Opportunities (Future Phases)
-
-- **Smart Recommendations**: Detect possible settlement paths
-- **NLP for Voice/Text Debt Creation**
-- **Risk Scoring**: Predict debt repayment likelihood
-- **Anomaly Detection**: Fraudulent or suspicious debt patterns
-
----
-
-## 🏗 Technical Architecture Needs
-
-- Modular microservice architecture
-- Encrypted, scalable database
-- Logging and rollback support for all actions
-- Offline-safe mobile caching
-- Clean REST APIs for frontend/backend separation
-
----
-
-## 📎 Target Use Cases
-
-| User Type | Key Use Case | Value |
-|-----------|--------------|-------|
-| Individuals | Record casual debts with friends/family | No-fee tracking, peace of mind |
-| Groups | Manage shared expenses (housemates, trips) | Clear visualization, shared reports |
-| Freelancers | Track client payments, create legal records | Boosts trust, reduces disputes |
-| SMEs | Internal or vendor settlements | Group dashboard + API |
-| Governments | Monitor taxable high-value settlements | Bridge to tax data without friction |
-
----
-
-## 🌍 Strategic Vision
-
-Settler is designed to become:
-- A **national infrastructure** for informal debt registration
-- A **legal tech platform** for the judiciary
-- A **GovTech tool** for tax transparency
-- An **export-ready fintech** for emerging economies
-
----
-
-## 🔐 Compliance & Security Notes
-
-- GDPR-style data privacy approach
-- Optional anonymous group modes
-- End-to-end audit logs for all records
-- API keys for institutional users with scoped permissions
-
----
-
-## 🚀 Next Step
-
-This document can be used by AI engineers or full-stack devs to begin building:
-- MVP backend logic
-- Basic mobile/web frontends
-- Legal receipt generation pipeline
-- Admin panel for monitoring activity
-
-> If you need **Database Schema**, **API contract definitions**, or **User Journeys**, they can be created immediately upon request.
+**Built with ❤️ for the Iranian fintech ecosystem**

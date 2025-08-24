@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست تسویه‌گر</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2196F3;
+            text-align: center;
+        }
+        .status {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .link {
+            background: #2196F3;
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .link:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تست تسویه‌گر</h1>
+        
+        <div class="status">
+            ✅ سرور کار می‌کند!
+        </div>
+        
+        <p>اگر این صفحه را می‌بینید، سرور Frontend کار می‌کند.</p>
+        
+        <div class="links">
+            <a href="/dashboard" class="link">داشبورد</a>
+            <a href="/debts" class="link">بدهی‌ها</a>
+            <a href="/groups" class="link">گروه‌ها</a>
+            <a href="/notifications" class="link">اعلان‌ها</a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #666;">
+            <p>زمان: <span id="time"></span></p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString('fa-IR');
+    </script>
+</body>
+</html>

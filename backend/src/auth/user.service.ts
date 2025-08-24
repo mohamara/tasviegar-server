@@ -4,7 +4,6 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { User } from "./user.entity"
 import { CreateUserDto, UpdateUserDto, UpdatePreferencesDto, ChangePasswordDto, SearchUsersDto } from "./user.dto"
 import { isValidIranianMobile, isValidIranianNationalId } from "./iranian-validation.util"
-import * as moment from "moment-jalaali"
 
 @Injectable()
 export class UserService {
@@ -116,8 +115,8 @@ export class UserService {
     // Format dates
     const formattedUsers = users.map(user => ({
       ...user,
-      createdAt: moment(user.createdAt).format("jYYYY/jMM/jDD HH:mm:ss"),
-      updatedAt: moment(user.updatedAt).format("jYYYY/jMM/jDD HH:mm:ss")
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString()
     }))
 
     return {
@@ -148,8 +147,8 @@ export class UserService {
 
     return {
       ...user,
-      createdAt: moment(user.createdAt).format("jYYYY/jMM/jDD HH:mm:ss"),
-      updatedAt: moment(user.updatedAt).format("jYYYY/jMM/jDD HH:mm:ss")
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString()
     }
   }
 
@@ -209,10 +208,19 @@ export class UserService {
       throw new NotFoundException("کاربر یافت نشد.")
     }
 
-    // Merge preferences
+    // Merge preferences with default values
     user.preferences = {
-      ...user.preferences,
-      ...dto
+      language: dto.language || user.preferences?.language || 'fa',
+      theme: dto.theme || user.preferences?.theme || 'light',
+      notifications: {
+        sms: dto.notifications?.sms ?? user.preferences?.notifications?.sms ?? false,
+        email: dto.notifications?.email ?? user.preferences?.notifications?.email ?? false,
+        push: dto.notifications?.push ?? user.preferences?.notifications?.push ?? false,
+      },
+      privacy: {
+        profileVisibility: dto.privacy?.profileVisibility || user.preferences?.privacy?.profileVisibility || 'friends',
+        showBalance: dto.privacy?.showBalance ?? user.preferences?.privacy?.showBalance ?? false,
+      }
     }
 
     await this.userRepository.save(user)

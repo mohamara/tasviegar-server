@@ -6,9 +6,9 @@ import { RegisterDto, LoginDto, VerifySmsDto, RefreshTokenDto, ForgotPasswordDto
 import { Iranian2FAService } from "./iranian-2fa.service"
 import { UserService } from "./user.service"
 import { User } from "./user.entity"
-import dayjs from 'dayjs'
-import jalaliday from 'jalaliday'
-dayjs.extend(jalaliday)
+// import dayjs from 'dayjs'
+// import jalaliday from 'jalaliday'
+// dayjs.extend(jalaliday)
 
 const sessions = new Map()
 const smsCodes = new Map()
@@ -257,7 +257,7 @@ export class AuthService {
   }
 
   getPersianDate() {
-    return dayjs().calendar('jalali').locale('fa').format('YYYY/MM/DD HH:mm:ss')
+    return new Date().toISOString()
   }
 
   // Clean up expired sessions and SMS codes

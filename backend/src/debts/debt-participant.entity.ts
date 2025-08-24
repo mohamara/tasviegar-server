@@ -56,7 +56,7 @@ export class DebtParticipant {
   @JoinColumn({ name: 'debtId' })
   debt: Debt
 
-  @ManyToOne(() => User, user => user.debtParticipants)
+  @ManyToOne(() => User, user => user.id)
   @JoinColumn({ name: 'userId' })
   user: User
 

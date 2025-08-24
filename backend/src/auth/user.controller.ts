@@ -23,7 +23,7 @@ export class UserController {
     try {
       const result = await this.userService.findAll(query)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
         message: "خطا در دریافت لیست کاربران." 
       })
@@ -37,7 +37,7 @@ export class UserController {
     try {
       const stats = await this.userService.getStats()
       return res.status(HttpStatus.OK).json(stats)
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
         message: "خطا در دریافت آمار کاربران." 
       })
@@ -52,7 +52,7 @@ export class UserController {
     try {
       const user = await this.userService.findOne(id)
       return res.status(HttpStatus.OK).json(user)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در دریافت اطلاعات کاربر." 
@@ -69,7 +69,7 @@ export class UserController {
     try {
       const result = await this.userService.create(dto)
       return res.status(HttpStatus.CREATED).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در ایجاد کاربر." 
@@ -89,7 +89,7 @@ export class UserController {
     try {
       const result = await this.userService.update(id, dto)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در ویرایش کاربر." 
@@ -107,7 +107,7 @@ export class UserController {
     try {
       const result = await this.userService.updatePreferences(id, dto)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در بروزرسانی تنظیمات." 
@@ -126,7 +126,7 @@ export class UserController {
     try {
       const result = await this.userService.changePassword(id, dto)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در تغییر رمز عبور." 
@@ -144,7 +144,7 @@ export class UserController {
     try {
       const result = await this.userService.toggleActive(id)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در تغییر وضعیت کاربر." 
@@ -162,7 +162,7 @@ export class UserController {
     try {
       const result = await this.userService.remove(id)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در حذف کاربر." 
@@ -177,7 +177,7 @@ export class UserController {
     try {
       const result = this.userService.validateNationalId(dto.nationalId)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HttpStatus.BAD_REQUEST).json({ 
         message: "خطا در اعتبارسنجی کدملی." 
       })
@@ -191,7 +191,7 @@ export class UserController {
     try {
       const result = this.userService.validatePhone(dto.mobile)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HttpStatus.BAD_REQUEST).json({ 
         message: "خطا در اعتبارسنجی شماره موبایل." 
       })
@@ -209,7 +209,7 @@ export class UserController {
       const userId = (req as any).user.sub
       const user = await this.userService.findOne(userId)
       return res.status(HttpStatus.OK).json(user)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در دریافت پروفایل." 
@@ -229,7 +229,7 @@ export class UserController {
       const userId = (req as any).user.sub
       const result = await this.userService.update(userId, dto)
       return res.status(HttpStatus.OK).json(result)
-    } catch (error) {
+    } catch (error: any) {
       const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR
       return res.status(status).json({ 
         message: error.message || "خطا در بروزرسانی پروفایل." 

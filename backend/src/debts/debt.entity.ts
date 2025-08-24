@@ -74,7 +74,7 @@ export class Debt {
   settledAt: Date
 
   // Relations
-  @ManyToOne(() => User, user => user.debts)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'creatorId' })
   creator: User
 

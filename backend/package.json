@@ -1,0 +1,22 @@
+{
+  "name": "tasviegar-backend",
+  "version": "1.0.0",
+  "description": "Tasviegar Backend Server",
+  "main": "simple-auth-server.js",
+  "scripts": {
+    "start": "node simple-auth-server.js",
+    "dev": "nodemon simple-auth-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "sms-typescript": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["tasviegar", "backend", "sms", "auth"],
+  "author": "Tasviegar Team",
+  "license": "MIT"
+}

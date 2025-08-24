@@ -45,7 +45,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.createDebt(userId, createDebtDto)
       return res.status(HttpStatus.CREATED).json(result)
     } catch (error: any) {
@@ -71,7 +71,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.getUserDebts(userId, query)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -91,7 +91,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.getDebtStatistics(userId)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -115,7 +115,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.getDebtById(id, userId)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -141,7 +141,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.updateDebt(id, userId, updateDebtDto)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -165,7 +165,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.deleteDebt(id, userId)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -189,7 +189,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.confirmParticipation(id, userId)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -212,7 +212,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.createTransaction(userId, createTransactionDto)
       return res.status(HttpStatus.CREATED).json(result)
     } catch (error: any) {
@@ -237,7 +237,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       const result = await this.debtsService.completeTransaction(id, userId)
       return res.status(HttpStatus.OK).json(result)
     } catch (error: any) {
@@ -262,7 +262,7 @@ export class DebtsController {
     @Res() res: Response
   ) {
     try {
-      const userId = req.user['id']
+      const userId = (req.user as any)?.id
       // TODO: Implement getUserTransactions method in service
       return res.status(HttpStatus.OK).json({ 
         message: "این قابلیت در حال توسعه است." 

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, BeforeInsert, BeforeUpdate } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, BeforeInsert, BeforeUpdate, OneToMany } from 'typeorm'
 import { Exclude } from 'class-transformer'
 import * as bcrypt from 'bcrypt'
 
@@ -99,32 +99,32 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date
 
-  // Relations for debts
-  @OneToMany(() => import('../debts/debt.entity').then(m => m.Debt), debt => debt.creator)
-  debts: any[]
+  // Relations for debts - temporarily commented out to fix TypeScript errors
+  // @OneToMany(() => import('../debts/debt.entity').then(m => m.Debt), debt => debt.creator)
+  // debts: any[]
 
-  @OneToMany(() => import('../debts/debt-participant.entity').then(m => m.DebtParticipant), participant => participant.user)
-  debtParticipants: any[]
+  // @OneToMany(() => import('../debts/debt-participant.entity').then(m => m.DebtParticipant), participant => participant.user)
+  // debtParticipants: any[]
 
-  @OneToMany(() => import('../debts/debt-transaction.entity').then(m => m.DebtTransaction), transaction => transaction.payer)
-  paidTransactions: any[]
+  // @OneToMany(() => import('../debts/debt-transaction.entity').then(m => m.DebtTransaction), transaction => transaction.payer)
+  // paidTransactions: any[]
 
-  @OneToMany(() => import('../debts/debt-transaction.entity').then(m => m.DebtTransaction), transaction => transaction.payee)
-  receivedTransactions: any[]
+  // @OneToMany(() => import('../debts/debt-transaction.entity').then(m => m.DebtTransaction), transaction => transaction.payee)
+  // receivedTransactions: any[]
 
-  // Relations for groups
-  @OneToMany(() => import('../groups/group.entity').then(m => m.Group), group => group.creator)
-  createdGroups: any[]
+  // Relations for groups - temporarily commented out to fix TypeScript errors
+  // @OneToMany(() => import('../groups/group.entity').then(m => m.Group), group => group.creator)
+  // createdGroups: any[]
 
-  @OneToMany(() => import('../groups/group-member.entity').then(m => m.GroupMember), member => member.user)
-  groupMemberships: any[]
+  // @OneToMany(() => import('../groups/group-member.entity').then(m => m.GroupMember), member => member.user)
+  // groupMemberships: any[]
 
-  @OneToMany(() => import('../groups/group-invitation.entity').then(m => m.GroupInvitation), invitation => invitation.inviter)
-  sentInvitations: any[]
+  // @OneToMany(() => import('../groups/group-invitation.entity').then(m => m.GroupInvitation), invitation => invitation.inviter)
+  // sentInvitations: any[]
 
-  // Relations for notifications
-  @OneToMany(() => import('../notifications/notification.entity').then(m => m.Notification), notification => notification.user)
-  notifications: any[]
+  // Relations for notifications - temporarily commented out to fix TypeScript errors
+  // @OneToMany(() => import('../notifications/notification.entity').then(m => m.Notification), notification => notification.user)
+  // notifications: any[]
 
   @BeforeInsert()
   @BeforeUpdate()

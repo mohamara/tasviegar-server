@@ -10,10 +10,10 @@ async function bootstrap() {
   app.use(helmet())
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
   app.enableCors({
-    origin: ["http://localhost:8080", "http://127.0.0.1:8080"],
+    origin: ["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:8082", "http://127.0.0.1:8082"],
     credentials: true,
   })
-  app.setGlobalPrefix('api/v1')
+  app.setGlobalPrefix('api')
 
   const config = new DocumentBuilder()
     .setTitle('Settler API')

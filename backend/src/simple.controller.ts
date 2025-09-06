@@ -1,4 +1,8 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Query, Put, Delete } from '@nestjs/common'
+
+// In-memory storage for demo
+const debts = new Map()
+let nextId = 1
 
 @Controller()
 export class SimpleController {
@@ -16,28 +20,89 @@ export class SimpleController {
 
   @Get('debts')
   getDebts() {
-    return [
-      {
-        id: '1',
-        amount: 5000000,
-        description: 'قرض برای خرید ماشین',
-        debtorId: 'user1',
-        creditorId: 'user2',
-        status: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2',
-        amount: 3000000,
-        description: 'وام مسکن',
-        debtorId: 'user2',
-        creditorId: 'user3',
-        status: 'approved',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ]
+    return Array.from(debts.values())
+  }
+
+  @Post('debts')
+  createDebt(@Body() debtData: any) {
+    const id = nextId.toString()
+    nextId++
+    
+    const debt = {
+      id,
+      ...debtData,
+      status: 'pending',
+      confirmationStatus: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    debts.set(id, debt)
+    return debt
+  }
+
+  @Get('debts/:id')
+  getDebtById(@Param('id') id: string) {
+    const debt = debts.get(id)
+    if (!debt) {
+      return { error: 'Debt not found' }
+    }
+    return debt
+  }
+
+  @Post('debts/:id/confirm')
+  confirmDebt(@Param('id') id: string) {
+    const debt = debts.get(id)
+    if (!debt) {
+      return { error: 'Debt not found' }
+    }
+    
+    debt.confirmationStatus = 'confirmed'
+    debt.status = 'approved'
+    debt.updatedAt = new Date()
+    
+    debts.set(id, debt)
+    return { message: 'Debt confirmed successfully', debt }
+  }
+
+  @Post('debts/:id/reject')
+  rejectDebt(@Param('id') id: string) {
+    const debt = debts.get(id)
+    if (!debt) {
+      return { error: 'Debt not found' }
+    }
+    
+    debt.confirmationStatus = 'rejected'
+    debt.status = 'rejected'
+    debt.updatedAt = new Date()
+    
+    debts.set(id, debt)
+    return { message: 'Debt rejected successfully', debt }
+  }
+
+  @Put('debts/:id')
+  updateDebt(@Param('id') id: string, @Body() updateData: any) {
+    const debt = debts.get(id)
+    if (!debt) {
+      return { error: 'Debt not found' }
+    }
+    
+    Object.assign(debt, updateData)
+    debt.updatedAt = new Date()
+    
+    debts.set(id, debt)
+    return debt
+  }
+
+  @Delete('debts/:id')
+  deleteDebt(@Param('id') id: string) {
+    const debt = debts.get(id)
+    if (!debt) {
+      return { error: 'Debt not found' }
+    }
+    
+    debts.delete(id)
+    return { message: 'Debt deleted successfully' }
   }
 
   @Get('credits')

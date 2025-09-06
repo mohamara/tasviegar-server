@@ -10,7 +10,7 @@ const sessions = new Map()
 export class AuthSimpleController {
   
   @Post('send-sms')
-  async sendSms(@Body() body: { mobile: string }, @Res() res: Response) {
+  async sendSms(@Body() body: { mobile: string; message?: string }, @Res() res: Response) {
     try {
       const { mobile } = body
       
@@ -30,10 +30,11 @@ export class AuthSimpleController {
       })
 
       // Log SMS (in real app, this would send actual SMS)
-      console.log(`📱 SMS sent to ${mobile}: کد تایید: ${code}`)
+      const smsMessage = body.message || `کد تایید: ${code}`
+      console.log(`📱 SMS sent to ${mobile}: ${smsMessage}`)
       
       return res.status(HttpStatus.OK).json({
-        message: 'کد تایید ارسال شد',
+        message: 'پیامک ارسال شد',
         mobile,
         expiresIn: '5 دقیقه'
       })

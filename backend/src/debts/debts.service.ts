@@ -16,6 +16,7 @@ import {
   DebtParticipantResponseDto,
   TransactionResponseDto
 } from './debts.dto'
+import { jalaliToTimestamp, timestampToJalali, validateJalaliDate } from '../utils/jalali-date.util'
 
 @Injectable()
 export class DebtsService {
@@ -49,6 +50,15 @@ export class DebtsService {
     const totalShareAmount = participants.reduce((sum, p) => sum + p.shareAmount, 0)
     if (Math.abs(totalShareAmount - debtData.totalAmount) > 0.01) {
       throw new BadRequestException('مجموع سهم‌ها باید با مبلغ کل برابر باشد.')
+    }
+
+    // Validate and convert Jalali due date
+    if (debtData.dueDate) {
+      if (!validateJalaliDate(debtData.dueDate)) {
+        throw new BadRequestException('فرمت تاریخ سررسید نامعتبر است. از فرمت YYYY/MM/DD استفاده کنید.')
+      }
+      // Convert Jalali date to timestamp for database storage
+      debtData.dueDate = jalaliToTimestamp(debtData.dueDate).toISOString()
     }
 
     // Create debt
@@ -162,6 +172,15 @@ export class DebtsService {
 
     if (debt.status !== DebtStatus.PENDING) {
       throw new BadRequestException('فقط بدهی‌های در انتظار قابل ویرایش هستند.')
+    }
+
+    // Validate and convert Jalali due date if provided
+    if (updateDebtDto.dueDate) {
+      if (!validateJalaliDate(updateDebtDto.dueDate)) {
+        throw new BadRequestException('فرمت تاریخ سررسید نامعتبر است. از فرمت YYYY/MM/DD استفاده کنید.')
+      }
+      // Convert Jalali date to timestamp for database storage
+      updateDebtDto.dueDate = jalaliToTimestamp(updateDebtDto.dueDate).toISOString()
     }
 
     // Update debt
@@ -392,7 +411,7 @@ export class DebtsService {
       status: debt.status,
       creatorId: debt.creatorId,
       currency: debt.currency,
-      dueDate: debt.dueDate,
+      dueDate: debt.dueDate ? timestampToJalali(debt.dueDate) : undefined,
       metadata: debt.metadata,
       isRecurring: debt.isRecurring,
       createdAt: debt.createdAt,

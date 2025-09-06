@@ -5,7 +5,7 @@ const app = express()
 
 // Middleware
 app.use(cors({
-  origin: true, // همه origins را قبول کن
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:8082'], // Admin panel origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -18,6 +18,9 @@ const smsCodes = new Map()
 const sessions = new Map()
 const debts = new Map()
 const credits = new Map()
+
+// Admin phone numbers
+const adminPhones = ['09123456789', '09198765432']
 
 // Initialize with sample data
 debts.set('1', {
@@ -119,6 +122,42 @@ app.get('/api/debug', (req, res) => {
   })
 })
 
+// Debug SMS codes endpoint
+app.get('/api/debug/sms/:mobile', (req, res) => {
+  const { mobile } = req.params
+  const record = smsCodes.get(mobile)
+  res.json({
+    mobile,
+    hasRecord: !!record,
+    record: record || null,
+    allCodes: Array.from(smsCodes.entries())
+  })
+})
+
+// Debug admin SMS codes endpoint
+app.get('/api/debug/admin-sms/:mobile', (req, res) => {
+  const { mobile } = req.params
+  const record = smsCodes.get(mobile)
+  
+  if (record && record.isAdmin) {
+    res.json({
+      mobile,
+      code: record.code,
+      expires: new Date(record.expires).toLocaleString('fa-IR'),
+      isExpired: record.expires < Date.now(),
+      isAdmin: true,
+      role: mobile === '09123456789' ? 'مدیر اصلی' : 'ادمین دوم'
+    })
+  } else {
+    res.json({
+      mobile,
+      message: 'کد ادمین یافت نشد',
+      isAdmin: false,
+      allAdminCodes: Array.from(smsCodes.entries()).filter(([_, record]) => record.isAdmin)
+    })
+  }
+})
+
 // Dashboard endpoints
 app.get('/api/dashboard/stats', (req, res) => {
   res.json({
@@ -136,19 +175,73 @@ app.get('/api/debts', (req, res) => {
 })
 
 app.post('/api/debts', (req, res) => {
-  const { amount, description, debtorId, creditorId } = req.body
-  const newDebt = {
-    id: Date.now().toString(),
-    amount,
-    description,
-    debtorId,
-    creditorId,
+  const id = Date.now().toString()
+  const debt = {
+    id,
+    ...req.body,
     status: 'pending',
+    confirmationStatus: 'pending',
     createdAt: new Date(),
     updatedAt: new Date()
   }
-  debts.set(newDebt.id, newDebt)
-  res.json(newDebt)
+  debts.set(id, debt)
+  res.json(debt)
+})
+
+app.get('/api/debts/:id', (req, res) => {
+  const debt = debts.get(req.params.id)
+  if (!debt) {
+    return res.status(404).json({ error: 'Debt not found' })
+  }
+  res.json(debt)
+})
+
+app.put('/api/debts/:id', (req, res) => {
+  const debt = debts.get(req.params.id)
+  if (!debt) {
+    return res.status(404).json({ error: 'Debt not found' })
+  }
+  
+  Object.assign(debt, req.body)
+  debt.updatedAt = new Date()
+  debts.set(req.params.id, debt)
+  res.json(debt)
+})
+
+app.delete('/api/debts/:id', (req, res) => {
+  const debt = debts.get(req.params.id)
+  if (!debt) {
+    return res.status(404).json({ error: 'Debt not found' })
+  }
+  
+  debts.delete(req.params.id)
+  res.json({ message: 'Debt deleted successfully' })
+})
+
+app.post('/api/debts/:id/confirm', (req, res) => {
+  const debt = debts.get(req.params.id)
+  if (!debt) {
+    return res.status(404).json({ error: 'Debt not found' })
+  }
+  
+  debt.confirmationStatus = 'confirmed'
+  debt.status = 'approved'
+  debt.updatedAt = new Date()
+  debts.set(req.params.id, debt)
+  res.json({ message: 'Debt confirmed successfully', debt })
+})
+
+app.post('/api/debts/:id/reject', (req, res) => {
+  const debt = debts.get(req.params.id)
+  if (!debt) {
+    return res.status(404).json({ error: 'Debt not found' })
+  }
+  
+  debt.confirmationStatus = 'rejected'
+  debt.status = 'rejected'
+  debt.updatedAt = new Date()
+  debts.set(req.params.id, debt)
+  res.json({ message: 'Debt rejected successfully', debt })
 })
 
 app.put('/api/debts/:id', (req, res) => {
@@ -319,7 +412,13 @@ app.post('/api/auth/verify-sms', async (req, res) => {
       })
     }
 
-    if (record.code !== code) {
+    // Convert both codes to string and compare
+    const storedCode = String(record.code)
+    const inputCode = String(code)
+    
+    console.log(`🔍 مقایسه کدها: "${storedCode}" === "${inputCode}"`)
+    
+    if (storedCode !== inputCode) {
       return res.status(400).json({
         message: 'کد تایید اشتباه است'
       })
@@ -371,6 +470,124 @@ app.post('/api/auth/verify-sms', async (req, res) => {
       expiresIn: '24 ساعت'
     })
   } catch (error) {
+    res.status(500).json({
+      message: 'خطا در تایید کد'
+    })
+  }
+})
+
+// Admin SMS endpoints
+app.post('/api/admin/send-sms', async (req, res) => {
+  try {
+    const { mobile } = req.body
+    
+    if (!mobile || !/^09\d{9}$/.test(mobile)) {
+      return res.status(400).json({
+        message: 'شماره موبایل معتبر نیست'
+      })
+    }
+
+    // Check if phone is admin
+    if (!adminPhones.includes(mobile)) {
+      return res.status(403).json({
+        message: 'شماره موبایل وارد شده مجاز نیست. فقط ادمین‌ها می‌توانند وارد شوند.'
+      })
+    }
+
+    // Generate 4-digit code
+    const code = Math.floor(1000 + Math.random() * 9000).toString()
+    
+    // Store code with expiration (5 minutes)
+    smsCodes.set(mobile, {
+      code,
+      expires: Date.now() + 5 * 60 * 1000,
+      isAdmin: true
+    })
+    
+    console.log(`🔐 کد ادمین ${code} برای ${mobile} در Map ذخیره شد`)
+    console.log(`📊 تعداد کدهای ذخیره شده: ${smsCodes.size}`)
+    
+    // For demo purposes, also return the code
+    res.json({
+      message: 'کد تایید ارسال شد',
+      success: true,
+      code: code // For demo - remove in production
+    })
+  } catch (error) {
+    console.error('Error sending admin SMS:', error)
+    res.status(500).json({
+      message: 'خطا در ارسال پیامک'
+    })
+  }
+})
+
+app.post('/api/admin/verify-sms', async (req, res) => {
+  try {
+    const { mobile, code } = req.body
+    
+    if (!mobile || !code) {
+      return res.status(400).json({
+        message: 'شماره موبایل و کد تایید الزامی است'
+      })
+    }
+
+    console.log(`🔍 بررسی کد ادمین برای ${mobile}: ${code}`)
+
+    const record = smsCodes.get(mobile)
+    
+    if (!record) {
+      return res.status(400).json({
+        message: 'کد تایید یافت نشد'
+      })
+    }
+
+    if (record.expires < Date.now()) {
+      smsCodes.delete(mobile)
+      return res.status(400).json({
+        message: 'کد تایید منقضی شده است'
+      })
+    }
+
+    if (!record.isAdmin) {
+      return res.status(403).json({
+        message: 'این کد برای ادمین نیست'
+      })
+    }
+
+    // Convert both codes to string and compare
+    const storedCode = String(record.code)
+    const inputCode = String(code)
+    
+    if (storedCode !== inputCode) {
+      return res.status(400).json({
+        message: 'کد تایید اشتباه است'
+      })
+    }
+
+    // Remove used code
+    smsCodes.delete(mobile)
+    
+    // Create admin session
+    const sessionId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    sessions.set(sessionId, {
+      mobile,
+      isAdmin: true,
+      role: mobile === '09123456789' ? 'مدیر اصلی' : 'ادمین دوم',
+      createdAt: new Date().toISOString()
+    })
+    
+    res.json({
+      message: 'ورود موفقیت‌آمیز',
+      success: true,
+      sessionId,
+      adminInfo: {
+        mobile,
+        role: mobile === '09123456789' ? 'مدیر اصلی' : 'ادمین دوم',
+        name: mobile === '09123456789' ? 'مدیر اصلی' : 'ادمین دوم'
+      }
+    })
+  } catch (error) {
+    console.error('Error verifying admin SMS:', error)
     res.status(500).json({
       message: 'خطا در تایید کد'
     })
@@ -445,6 +662,141 @@ app.get('/', (req, res) => {
       groups: '/api/groups',
       notifications: '/api/notifications'
     }
+  })
+})
+
+// Admin API endpoints
+app.get('/api/admin/users', (req, res) => {
+  res.json([
+    {
+      id: '1',
+      username: 'user1',
+      email: 'user1@example.com',
+      phone: '+989123456789',
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      lastLogin: '2024-01-15T10:30:00.000Z'
+    },
+    {
+      id: '2',
+      username: 'user2',
+      email: 'user2@example.com',
+      phone: '+989123456790',
+      isActive: true,
+      createdAt: '2024-01-02T00:00:00.000Z',
+      lastLogin: '2024-01-14T15:45:00.000Z'
+    },
+    {
+      id: '3',
+      username: 'user3',
+      email: 'user3@example.com',
+      phone: '+989123456791',
+      isActive: false,
+      createdAt: '2024-01-03T00:00:00.000Z',
+      lastLogin: '2024-01-10T09:20:00.000Z'
+    }
+  ])
+})
+
+app.get('/api/admin/debts', (req, res) => {
+  res.json([
+    {
+      id: '1',
+      title: 'Trip to Shiraz',
+      amount: 1500000,
+      currency: 'IRR',
+      status: 'active',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      participants: 4
+    },
+    {
+      id: '2',
+      title: 'Dinner Party',
+      amount: 500000,
+      currency: 'IRR',
+      status: 'pending',
+      createdAt: '2024-01-02T00:00:00.000Z',
+      participants: 6
+    },
+    {
+      id: '3',
+      title: 'Movie Night',
+      amount: 300000,
+      currency: 'IRR',
+      status: 'settled',
+      createdAt: '2024-01-03T00:00:00.000Z',
+      participants: 3
+    }
+  ])
+})
+
+app.get('/api/admin/groups', (req, res) => {
+  res.json([
+    {
+      id: '1',
+      name: 'Family Group',
+      description: 'Family expenses and shared costs',
+      memberCount: 8,
+      createdAt: '2024-01-01T00:00:00.000Z',
+      isActive: true
+    },
+    {
+      id: '2',
+      name: 'Friends Trip',
+      description: 'Vacation planning and expenses',
+      memberCount: 5,
+      createdAt: '2024-01-02T00:00:00.000Z',
+      isActive: true
+    },
+    {
+      id: '3',
+      name: 'Work Team',
+      description: 'Work-related expenses and reimbursements',
+      memberCount: 12,
+      createdAt: '2024-01-03T00:00:00.000Z',
+      isActive: false
+    }
+  ])
+})
+
+app.get('/api/admin/notifications', (req, res) => {
+  res.json([
+    {
+      id: '1',
+      title: 'کاربر جدید ثبت نام کرد',
+      message: 'کاربر با نام کاربری user123 در سیستم ثبت نام کرد',
+      type: 'info',
+      isRead: false,
+      createdAt: '2024-01-15T10:30:00.000Z'
+    },
+    {
+      id: '2',
+      title: 'بدهی جدید تسویه شد',
+      message: 'بدهی "سفر به شیراز" با موفقیت تسویه شد',
+      type: 'success',
+      isRead: true,
+      createdAt: '2024-01-15T09:15:00.000Z'
+    },
+    {
+      id: '3',
+      title: 'خطا در پردازش تراکنش',
+      message: 'خطا در پردازش تراکنش شماره TXN-001',
+      type: 'error',
+      isRead: false,
+      createdAt: '2024-01-15T08:45:00.000Z'
+    }
+  ])
+})
+
+app.get('/api/admin/analytics', (req, res) => {
+  res.json({
+    totalUsers: 150,
+    activeUsers: 120,
+    totalDebts: 45,
+    activeDebts: 23,
+    totalGroups: 18,
+    totalTransactions: 234,
+    monthlyGrowth: 12.5
   })
 })
 

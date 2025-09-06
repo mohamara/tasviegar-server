@@ -1,6 +1,9 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsUUID, IsDateString, IsBoolean, IsArray, Min, MaxLength, IsNotEmpty } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsEnum, IsUUID, IsDateString, IsBoolean, IsArray, Min, MaxLength, IsNotEmpty, Matches } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { DebtStatus, DebtType, ParticipantRole, TransactionStatus, TransactionType } from './debt.entity'
+import { DebtStatus, DebtType } from './debt.entity'
+import { ParticipantRole } from './debt-participant.entity'
+import { TransactionStatus, TransactionType } from './debt-transaction.entity'
+import { validateJalaliDate } from '../utils/jalali-date.util'
 
 // Create Debt DTO
 export class CreateDebtDto {
@@ -30,9 +33,10 @@ export class CreateDebtDto {
   @IsString()
   currency?: string
 
-  @ApiPropertyOptional({ description: 'تاریخ سررسید' })
+  @ApiPropertyOptional({ description: 'تاریخ سررسید (شمسی)', example: '1403/08/15' })
   @IsOptional()
-  @IsDateString()
+  @IsString()
+  @Matches(/^\d{4}\/\d{2}\/\d{2}$/, { message: 'فرمت تاریخ باید YYYY/MM/DD باشد' })
   dueDate?: string
 
   @ApiPropertyOptional({ description: 'اطلاعات اضافی' })
@@ -100,9 +104,10 @@ export class UpdateDebtDto {
   @IsEnum(DebtStatus)
   status?: DebtStatus
 
-  @ApiPropertyOptional({ description: 'تاریخ سررسید' })
+  @ApiPropertyOptional({ description: 'تاریخ سررسید (شمسی)', example: '1403/08/15' })
   @IsOptional()
-  @IsDateString()
+  @IsString()
+  @Matches(/^\d{4}\/\d{2}\/\d{2}$/, { message: 'فرمت تاریخ باید YYYY/MM/DD باشد' })
   dueDate?: string
 
   @ApiPropertyOptional({ description: 'اطلاعات اضافی' })
@@ -249,8 +254,8 @@ export class DebtResponseDto {
   @ApiProperty()
   currency?: string
 
-  @ApiProperty()
-  dueDate?: Date
+  @ApiProperty({ description: 'تاریخ سررسید (شمسی)', example: '1403/08/15' })
+  dueDate?: string
 
   @ApiProperty()
   metadata?: any

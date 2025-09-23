@@ -373,6 +373,7 @@ app.post('/api/auth/send-sms', async (req, res) => {
     res.json({
       message: 'کد تایید ارسال شد',
       mobile,
+      code: code, // کد را در response برگردان
       expiresIn: '5 دقیقه',
       provider: SMS_CONFIG.provider
     })
